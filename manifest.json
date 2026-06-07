@@ -1,0 +1,29 @@
+{
+  "id": "81ae8109-ee4d-42e3-ab69-9bb73765d866",
+  "version": "1.0.0",
+  "name": "{{manifest.app.name}}",
+  "logo": "/logo.png",
+  "keywords": [
+    "AI",
+    "视觉",
+    "特效",
+    "标签",
+    "视频",
+    "动图",
+    "诊断"
+  ],
+  "fallbackLanguage": "zh_CN",
+  "languages": [
+    "zh_CN"
+  ],
+  "dependencies": [
+    "ai-sdk",
+    "ffmpeg"
+  ],
+  "main": {
+    "devTools": true,
+    "url": "index.html",
+    "width": 1180,
+    "height": 760
+  }
+}

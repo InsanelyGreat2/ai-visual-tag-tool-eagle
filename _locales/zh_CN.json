@@ -1,0 +1,309 @@
+{
+  "appTitle": "AI视觉标签助手",
+  "credit": "插件by InsanelyGreat QQ群1091524118",
+  "button": {
+    "aiSettings": "AI 设置",
+    "importSelected": "导入选中素材",
+    "refreshSelection": "刷新选择",
+    "startAnalysis": "开始分析",
+    "pause": "暂停",
+    "continue": "继续",
+    "restart": "重新开始",
+    "chooseFolder": "选择文件夹",
+    "applyTags": "写入标签",
+    "undo": "撤销写入",
+    "importDefaults": "导入默认模板",
+    "add": "添加",
+    "refreshEagleTags": "刷新 Eagle 标签",
+    "clearResults": "清空结果",
+    "reanalyze": "重新分析",
+    "toggleTheme": "切换夜间模式",
+    "settings": "设置",
+    "manageTemplate": "管理模板",
+    "pinCollector": "置顶采集",
+    "appendSelected": "追加当前选中",
+    "replaceSelected": "替换为当前选中",
+    "clear": "清空",
+    "expandItems": "展开素材",
+    "retryFailed": "重试失败项",
+    "close": "关闭",
+    "previous": "上一个",
+    "next": "下一个",
+    "openInEagle": "用 Eagle 打开",
+    "resetBuiltInTemplate": "重置内置模板",
+    "importCurrentTemplate": "导入当前模板",
+    "check": "检测",
+    "healthCheck": "环境检查",
+    "applyPreset": "应用预设",
+    "collectSelected": "收集选中",
+    "clearAll": "清空全部",
+    "workbench": "工作台"
+  },
+  "stat": {
+    "pendingItems": "待分析素材",
+    "tagPool": "标签池",
+    "readyToWrite": "待写入",
+    "failedSkipped": "失败/跳过",
+    "materials": "素材",
+    "tags": "标签"
+  },
+  "section": {
+    "tagPool": "标签池",
+    "selectedItems": "待分析素材",
+    "settings": "设置",
+    "results": "分析结果",
+    "allSelectedItems": "全部待分析素材",
+    "mediaPreview": "素材预览",
+    "defaultTemplate": "默认模板",
+    "collector": "素材采集"
+  },
+  "label": {
+    "tagSource": "Eagle 标签来源",
+    "maxTags": "最大标签数",
+    "concurrency": "并发数",
+    "aiRetryCount": "AI 重试次数",
+    "autoConfidence": "自动写入置信度",
+    "hideConfidence": "隐藏低于置信度",
+    "frameRate": "抽帧频率",
+    "frameRateUnit": "频率单位",
+    "maxVideoFrames": "视频抽帧最大图片数",
+    "maxAnimatedFrames": "动图最大帧数",
+    "skipStart": "跳过开头(秒)",
+    "skipEnd": "跳过结尾(秒)",
+    "diagnosticDir": "诊断保存文件夹",
+    "globalPrompt": "全局 AI 提示词",
+    "eagleAiModel": "Eagle AI 模型",
+    "healthCheck": "环境检查",
+    "promptPreviewEdit": "预览 / 编辑提示词",
+    "analysisPreset": "分析预设",
+    "requestChunkK": "AI 请求分块 (K)",
+    "analysisExplanation": "分析阐述",
+    "maxVideoFramesShort": "视频最大帧数"
+  },
+  "check": {
+    "skipTagged": "只分析未打标签素材",
+    "previewBeforeWrite": "分析后预览，再手动写入",
+    "autoApplyHighConfidence": "自动写入高置信标签",
+    "writeAnnotation": "将 AI 分析说明追加到注释",
+    "diagnosticEnabled": "保存诊断帧和路径信息",
+    "includeTitleInPrompt": "将素材标题传给 AI",
+    "allowOutOfPoolSuggestions": "允许标签池外兜底建议"
+  },
+  "option": {
+    "allEagleTags": "全部 Eagle 标签",
+    "fps": "帧/秒",
+    "spf": "秒/帧",
+    "noPreset": "不使用预设"
+  },
+  "placeholder": {
+    "newTag": "新增候选标签",
+    "searchTagPool": "搜索标签池",
+    "diagnosticDir": "请选择或粘贴本地文件夹路径",
+    "globalPrompt": "可选。这里写给 AI 的全局分析偏好，例如：优先识别技能用途、不要添加纯颜色标签、偏向游戏特效术语。",
+    "searchTemplateTags": "搜索模板标签",
+    "newTemplateTag": "新增模板标签"
+  },
+  "hint": {
+    "tagPool": "可选择只读取某个 Eagle 标签组。删除只会从本插件候选池移除，不会删除 Eagle 里的真实标签。",
+    "globalPrompt": "全局提示词会附加到每次 AI 分析中；不能覆盖标签池、JSON 格式和置信度要求。",
+    "frameRateRange": "抽帧频率范围：最高 8 帧/秒，最低 3 秒/帧。",
+    "frameRateCurrent": "当前抽帧间隔约 {seconds} 秒，范围：最高 8 帧/秒，最低 3 秒/帧。",
+    "includeTitleInPrompt": "默认关闭。特效视频标题经常不准确，关闭后 AI 只依据画面和抽帧内容判断标签。",
+    "selectedList": "在这里查看、预览或右键移除所有待分析素材。",
+    "defaultTemplate": "这里只维护本地模板，不会创建或删除 Eagle 全局标签。",
+    "settingsDrawer": "低频参数放在这里，主工作区保持给素材和分析结果。",
+    "eagleAiOnly": "分析只使用 Eagle AI 模型套件。请在 Eagle AI 设置中配置默认视觉模型；视频、动图和诊断抽帧仍需要 FFmpeg 扩展模块。",
+    "preset": "预设只覆盖分析关键参数，不改全局提示词和诊断目录。",
+    "allowOutOfPoolSuggestions": "关闭时只从当前标签池选择；开启后会把本地默认模板作为兜底候选，命中后仍需确认，不会自动创建 Eagle 标签。",
+    "includeTitleInPromptShort": "默认不把素材标题传给 AI，避免标题或文件名误导画面识别。",
+    "collector": "边选边收",
+    "currentPreset": "当前预设：{name}。应用后会保存到下次启动。"
+  },
+  "status": {
+    "waiting": "等待读取 Eagle 资源",
+    "tagSourceChanged": "标签池来源已切换为：{label}",
+    "noTagApi": "未检测到 Eagle 标签 API，请在 Eagle 插件窗口中运行。",
+    "tagsLoaded": "已从 {label} 读取 {count} 个 Eagle 标签",
+    "tagsLoadFailed": "读取 Eagle 标签失败：{error}",
+    "tagGroupsLoadFailed": "读取 Eagle 标签组失败，将使用全部标签：{error}",
+    "noItemApi": "未检测到 Eagle 项目 API，请在 Eagle 插件窗口中运行。",
+    "selectedLoaded": "{action}：已读取 {count} 个 Eagle 选中素材",
+    "selectionLoadFailed": "读取选中素材失败：{error}",
+    "noAiSettings": "当前 Eagle 版本未提供 AI 设置入口。",
+    "defaultTagsImported": "已导入默认特效标签模板。",
+    "emptyTagPool": "标签池为空，请先刷新 Eagle 标签或导入默认模板。",
+    "noModel": "未配置默认视觉模型，请先打开 AI 设置。",
+    "noSelectedItems": "请先在 Eagle 中选择要分析的素材。",
+    "noItemsToAnalyze": "没有待分析的素材。如需重跑单个素材，请点击结果里的“重新分析”。",
+    "noDiagnosticDir": "已开启诊断保存，请先选择诊断保存文件夹。",
+    "diagnosticDirInvalid": "诊断保存文件夹不可用：{error}",
+    "folderSelectUnavailable": "当前环境无法打开文件夹选择器，请手动粘贴本地文件夹路径。",
+    "analysisPaused": "已暂停。点击“继续”处理剩余素材，或点击“重新开始”重跑当前批次。",
+    "analysisDone": "分析完成。",
+    "pausing": "正在暂停：当前正在分析的素材完成后停止，不再派发新素材。",
+    "cleanupFailed": "临时抽帧目录清理失败：{error}",
+    "noWritableResults": "没有可写入的分析结果。",
+    "savedItems": "已写入 {count} 个素材。",
+    "resultMissing": "找不到这个素材，请重新导入当前选中素材后再试。",
+    "reanalyzed": "已重新分析：{name}",
+    "reanalyzeFailed": "重新分析失败：{error}",
+    "undoMissing": "找不到可撤销的 Eagle 素材，请重新导入当前选中素材后再试。",
+    "undone": "已撤销：{source}。移除 {count} 个标签。"
+  },
+  "model": {
+    "configured": "视觉模型已配置",
+    "notConfigured": "未配置视觉模型",
+    "sdkUnavailable": "AI SDK 不可用",
+    "officialSuite": "使用 Eagle 官方 AI 模型套件",
+    "eagleVisionConfigured": "Eagle AI 视觉模型已配置",
+    "noDefaultVision": "未配置 Eagle 默认视觉模型",
+    "statusFailed": "Eagle AI 状态检查失败"
+  },
+  "action": {
+    "refreshSelection": "刷新选择",
+    "importSelected": "导入选中素材"
+  },
+  "group": {
+    "allEagleTags": "全部 Eagle 标签",
+    "named": "标签组「{name}」"
+  },
+  "empty": {
+    "selectedItems": "请先在 Eagle 中选择素材，然后点击“导入选中素材”。",
+    "tagPool": "标签池为空",
+    "results": "还没有分析结果"
+  },
+  "meta": {
+    "existingTags": "{count} 个已有标签"
+  },
+  "removeFromPool": "从候选池移除",
+  "result": {
+    "running": "分析中",
+    "skippedTagged": "已有标签，已跳过",
+    "autoWritten": "已自动写入 {count} 个高置信标签",
+    "autoPending": "{count} 个高置信标签待写入",
+    "highConfidenceReview": "{count} 个高置信标签待确认",
+    "reviewNeeded": "{count} 个标签需要确认",
+    "hiddenLowConfidence": "{count} 个低置信标签已隐藏",
+    "noTags": "AI 未返回达到置信度门槛的标签",
+    "externalCannotWrite": "外部导入文件无法写回 Eagle，请先把文件加入 Eagle 资源库",
+    "written": "已写入 Eagle",
+    "frameCount": "本次传给 AI 的图像数量：{count}",
+    "diagnosticSaved": "诊断文件已保存：{path}",
+    "filtered": "已过滤：{tags}",
+    "autoSection": "已自动写入",
+    "reviewSection": "待确认",
+    "reanalyzing": "重新分析中",
+    "pending": "等待分析"
+  },
+  "state": {
+    "pending": "等待",
+    "running": "分析中",
+    "ready": "待写入",
+    "failed": "失败",
+    "skipped": "跳过",
+    "applied": "已写入"
+  },
+  "source": {
+    "autoWrite": "自动写入高置信标签",
+    "manualWrite": "手动确认写入标签",
+    "writeTags": "写入标签",
+    "lastWrite": "上次写入"
+  },
+  "annotation": {
+    "marker": "[特效 AI 分析]"
+  },
+  "item": {
+    "unnamed": "未命名素材"
+  },
+  "path": {
+    "empty": "无路径"
+  },
+  "error": {
+    "unknown": "未知错误",
+    "noAiContent": "AI 没有返回内容",
+    "invalidJson": "AI 返回内容不是有效 JSON：{text}",
+    "notJson": "AI 返回内容不是 JSON：{text}",
+    "noGenerateText": "当前 AI SDK 没有 generateText()，请更新 Eagle AI 模型套件",
+    "noPath": "找不到原文件或预览图路径",
+    "noPreview": "该设计文件没有可用预览图",
+    "unsupportedFormat": "暂不支持该文件格式：{ext}",
+    "noFrameSource": "找不到可抽帧的原文件路径",
+    "noNode": "当前插件环境缺少 Node.js 能力，无法抽帧",
+    "noFfmpeg": "未检测到 Eagle FFmpeg 扩展",
+    "noFrameTimes": "无法计算抽帧时间点",
+    "noFrames": "抽帧失败，没有生成可分析图片",
+    "installFfmpeg": "需要先安装 Eagle FFmpeg 依赖插件",
+    "noFfmpegPath": "无法读取 FFmpeg 路径",
+    "noFfprobePath": "无法读取 ffprobe 路径",
+    "noFfprobe": "无法调用 ffprobe",
+    "noDuration": "无法读取媒体时长"
+  },
+  "format": {
+    "unknownExt": "未知",
+    "comma": "，",
+    "listSeparator": "、"
+  },
+  "manifest": {
+    "app": {
+      "name": "AI视觉标签助手"
+    }
+  },
+  "aria": {
+    "analysisOverview": "分析概览",
+    "closeWindow": "关闭窗口",
+    "enterCollector": "进入顶部置顶采集窗",
+    "resultFilter": "结果过滤",
+    "settingsTabs": "设置分组",
+    "collectorBar": "素材采集条",
+    "collectSelected": "收集当前选中素材",
+    "analyzeQueued": "开始分析待分析素材",
+    "clearQueueAndResults": "清空待分析队列和分析结果",
+    "expandWorkbench": "展开完整工作台"
+  },
+  "filter": {
+    "all": "全部",
+    "ready": "待写入",
+    "failed": "失败",
+    "applied": "已写入",
+    "skipped": "跳过"
+  },
+  "progress": {
+    "waitingAnalysis": "等待分析",
+    "writeInitial": "正在写入 0/0 个素材..."
+  },
+  "settingsTab": {
+    "backend": "AI 模型",
+    "analysis": "分析参数",
+    "frames": "抽帧",
+    "write": "写入与诊断"
+  },
+  "health": {
+    "waiting": "等待检查",
+    "available": "环境可用",
+    "blockingCount": "{count} 项阻塞",
+    "pass": "通过",
+    "blocking": "阻塞",
+    "warning": "提示"
+  },
+  "preset": {
+    "quick": "快速粗标",
+    "detail": "精细分析",
+    "longVideoSaver": "长视频省钱"
+  },
+  "collector": {
+    "countInitial": "0 个待分析",
+    "waiting": "等待收集"
+  },
+  "progressMeta": {
+    "stage": "阶段：{stage}",
+    "current": "当前：{name}",
+    "ready": "待写入 {count}",
+    "applied": "已写入 {count}",
+    "failed": "失败 {count}",
+    "skipped": "跳过 {count}",
+    "analysisDone": "分析完成 {done}/{total}",
+    "analyzing": "正在分析 {done}/{total}",
+    "writing": "正在写入 {done}/{total} 个素材...",
+    "writeFailed": "{done}/{total}，失败 {failed}"
+  }
+}

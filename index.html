@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-i18n="appTitle">AI视觉标签助手</title>
+  <link rel="icon" type="image/png" href="logo.png?v=1.0.5">
+  <link rel="shortcut icon" type="image/png" href="logo.png?v=1.0.5">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app workbench-shell">
+    <header class="topbar">
+      <div class="toolbar-title">
+        <div class="title-row">
+          <h1 data-i18n="appTitle">AI视觉标签助手</h1>
+        </div>
+        <div class="toolbar-status">
+          <p id="statusText" data-i18n="status.waiting">等待读取 Eagle 资源</p>
+          <div class="toolbar-stats" aria-label="分析概览" data-i18n-aria-label="aria.analysisOverview">
+            <div class="stat">
+              <span data-i18n="stat.materials">素材</span>
+              <strong id="selectedCount">0</strong>
+            </div>
+            <div class="stat">
+              <span data-i18n="stat.tags">标签</span>
+              <strong id="tagPoolCount">0</strong>
+            </div>
+            <div class="stat">
+              <span data-i18n="stat.readyToWrite">待写入</span>
+              <strong id="readyCount">0</strong>
+            </div>
+            <div class="stat">
+              <span data-i18n="stat.failedSkipped">失败/跳过</span>
+              <strong id="failedCount">0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="openAiBtn" type="button" data-i18n="button.settings">设置</button>
+        <button id="analyzeBtn" type="button" class="primary" data-i18n="button.startAnalysis">开始分析</button>
+        <button id="pauseBtn" type="button" disabled data-i18n="button.pause">暂停</button>
+        <button id="continueBtn" type="button" class="primary" hidden data-i18n="button.continue">继续</button>
+        <button id="restartBtn" type="button" hidden data-i18n="button.restart">重新开始</button>
+        <button id="applyBtn" type="button" class="success" disabled data-i18n="button.applyTags">写入标签</button>
+        <button id="closeWindowBtn" class="window-close-btn" type="button" aria-label="关闭窗口" title="关闭窗口" data-i18n-aria-label="aria.closeWindow" data-i18n-title="aria.closeWindow">×</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <aside class="panel tag-panel">
+        <div class="panel-header">
+          <h2 data-i18n="section.tagPool">标签池</h2>
+          <div class="tag-template-actions">
+            <button id="importDefaultsBtn" type="button" data-i18n="button.importDefaults">导入默认模板</button>
+            <button id="manageDefaultTemplateBtn" type="button" data-i18n="button.manageTemplate">管理模板</button>
+          </div>
+        </div>
+        <label class="tag-source-field">
+          <span data-i18n="label.tagSource">Eagle 标签来源</span>
+          <select id="tagGroupSelect">
+            <option value="__all" data-i18n="option.allEagleTags">全部 Eagle 标签</option>
+          </select>
+        </label>
+        <div class="inline-form">
+          <input id="tagInput" type="text" placeholder="新增候选标签" data-i18n-placeholder="placeholder.newTag">
+          <button id="addTagBtn" type="button" data-i18n="button.add">添加</button>
+        </div>
+        <div class="inline-form">
+          <input id="tagSearch" type="search" placeholder="搜索标签池" data-i18n-placeholder="placeholder.searchTagPool">
+          <button id="refreshTagsBtn" type="button" data-i18n="button.refreshEagleTags">刷新 Eagle 标签</button>
+        </div>
+        <p class="hint" data-i18n="hint.tagPool">可选择只读取某个 Eagle 标签组。删除只会从本插件候选池移除，不会删除 Eagle 里的真实标签。</p>
+        <div id="tagPool" class="tag-list"></div>
+      </aside>
+
+      <section class="main-column">
+        <section class="panel selected-panel">
+          <div class="panel-header">
+            <h2 data-i18n="section.selectedItems">待分析素材</h2>
+            <div class="material-actions">
+              <button id="miniCollectorBtn" class="collector-entry-btn" type="button" aria-label="进入顶部置顶采集窗" data-i18n-aria-label="aria.enterCollector">
+                <svg class="button-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 4v11M8 8l4-4 4 4M5 16h14M8 20h8"></path>
+                </svg>
+                <span data-i18n="button.pinCollector">置顶采集</span>
+              </button>
+              <button id="appendSelectedBtn" type="button" data-i18n="button.appendSelected">追加当前选中</button>
+              <button id="replaceSelectedBtn" type="button" data-i18n="button.replaceSelected">替换为当前选中</button>
+              <button id="clearSelectedBtn" type="button" data-i18n="button.clear">清空</button>
+              <button id="showSelectedListBtn" type="button" data-i18n="button.expandItems">展开素材</button>
+            </div>
+          </div>
+          <div id="selectedSummary" class="selected-summary"></div>
+          <div id="selectedItems" class="selected-list"></div>
+        </section>
+
+        <section class="panel results-panel">
+          <div class="panel-header">
+            <h2 data-i18n="section.results">分析结果</h2>
+          </div>
+          <div class="result-toolbar">
+            <div class="result-filters" role="group" aria-label="结果过滤" data-i18n-aria-label="aria.resultFilter">
+              <button type="button" class="is-active" data-result-filter="all" data-i18n="filter.all">全部</button>
+              <button type="button" data-result-filter="ready" data-i18n="filter.ready">待写入</button>
+              <button type="button" data-result-filter="failed" data-i18n="filter.failed">失败</button>
+              <button type="button" data-result-filter="applied" data-i18n="filter.applied">已写入</button>
+              <button type="button" data-result-filter="skipped" data-i18n="filter.skipped">跳过</button>
+            </div>
+            <div class="result-batch-actions">
+              <button id="retryFailedBtn" type="button" data-i18n="button.retryFailed">重试失败项</button>
+              <button id="undoBtn" type="button" disabled data-i18n="button.undo">撤销写入</button>
+              <button id="clearResultsBtn" type="button" data-i18n="button.clearResults">清空结果</button>
+            </div>
+          </div>
+          <div id="analysisProgressPanel" class="analysis-progress" hidden>
+            <div class="analysis-progress-head">
+              <strong id="analysisProgressText" data-i18n="progress.waitingAnalysis">等待分析</strong>
+              <span id="analysisProgressPercent">0%</span>
+            </div>
+            <div class="analysis-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div id="analysisProgressBar" class="analysis-progress-bar"></div>
+            </div>
+            <div id="analysisProgressMeta" class="analysis-progress-meta"></div>
+          </div>
+          <div id="writeProgressPanel" class="write-progress" hidden>
+            <div class="write-progress-head">
+              <strong id="writeProgressText" data-i18n="progress.writeInitial">正在写入 0/0 个素材...</strong>
+              <span id="writeProgressPercent">0%</span>
+            </div>
+            <div class="write-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div id="writeProgressBar" class="write-progress-bar"></div>
+            </div>
+            <div id="writeProgressMeta" class="write-progress-meta"></div>
+          </div>
+          <div id="results" class="results"></div>
+        </section>
+      </section>
+    </section>
+
+    <div id="selectedListOverlay" class="selected-list-overlay" hidden></div>
+    <section id="selectedListDialog" class="panel selected-list-dialog" role="dialog" aria-modal="true" aria-labelledby="selectedListTitle" aria-hidden="true" hidden>
+      <div class="selected-list-dialog-head">
+        <div>
+          <h2 id="selectedListTitle" data-i18n="section.allSelectedItems">全部待分析素材</h2>
+          <p class="hint" data-i18n="hint.selectedList">在这里查看、预览或右键移除所有待分析素材。</p>
+        </div>
+        <button id="closeSelectedListBtn" type="button" data-i18n="button.close">关闭</button>
+      </div>
+      <div id="selectedItemsFullList" class="selected-full-list"></div>
+    </section>
+
+    <div id="mediaPreviewOverlay" class="media-preview-overlay" hidden></div>
+    <section id="mediaPreviewDialog" class="panel media-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="mediaPreviewTitle" aria-hidden="true" hidden>
+      <div class="media-preview-head">
+        <div class="media-preview-title-block">
+          <h2 id="mediaPreviewTitle" data-i18n="section.mediaPreview">素材预览</h2>
+          <p id="mediaPreviewMeta" class="hint"></p>
+        </div>
+        <div class="media-preview-actions">
+          <button id="mediaPreviewPrevBtn" type="button" data-i18n="button.previous">上一个</button>
+          <button id="mediaPreviewNextBtn" type="button" data-i18n="button.next">下一个</button>
+          <button id="mediaPreviewOpenEagleBtn" type="button" data-i18n="button.openInEagle">用 Eagle 打开</button>
+          <button id="closeMediaPreviewBtn" type="button" data-i18n="button.close">关闭</button>
+        </div>
+      </div>
+      <div class="media-preview-main">
+        <div id="mediaPreviewBody" class="media-preview-player"></div>
+        <aside class="media-preview-side">
+          <div id="mediaPreviewStatus" class="media-preview-status"></div>
+          <div id="mediaPreviewTags" class="media-preview-tags"></div>
+          <div id="mediaPreviewReason" class="media-preview-reason"></div>
+        </aside>
+      </div>
+    </section>
+
+    <div id="defaultTemplateOverlay" class="default-template-overlay" hidden></div>
+    <section id="defaultTemplateDialog" class="panel default-template-dialog" role="dialog" aria-modal="true" aria-labelledby="defaultTemplateTitle" aria-hidden="true" hidden>
+      <div class="default-template-head">
+        <div>
+          <h2 id="defaultTemplateTitle" data-i18n="section.defaultTemplate">默认模板</h2>
+          <p class="hint" data-i18n="hint.defaultTemplate">这里只维护本地模板，不会创建或删除 Eagle 全局标签。</p>
+        </div>
+        <button id="closeDefaultTemplateBtn" type="button" data-i18n="button.close">关闭</button>
+      </div>
+      <div class="default-template-tools">
+        <input id="defaultTemplateSearch" type="search" placeholder="搜索模板标签" data-i18n-placeholder="placeholder.searchTemplateTags">
+        <div class="inline-form">
+          <input id="defaultTemplateInput" type="text" placeholder="新增模板标签" data-i18n-placeholder="placeholder.newTemplateTag">
+          <button id="addDefaultTemplateTagBtn" type="button" data-i18n="button.add">添加</button>
+        </div>
+      </div>
+      <div id="defaultTemplateList" class="default-template-list"></div>
+      <div class="default-template-footer">
+        <button id="resetDefaultTemplateBtn" type="button" data-i18n="button.resetBuiltInTemplate">重置内置模板</button>
+        <button id="importEditedDefaultTemplateBtn" type="button" class="primary" data-i18n="button.importCurrentTemplate">导入当前模板</button>
+      </div>
+    </section>
+
+    <div id="settingsOverlay" class="settings-overlay" hidden></div>
+    <section id="settingsDrawer" class="panel settings-drawer" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+      <div class="settings-drawer-head">
+        <div>
+          <h2 id="settingsTitle" data-i18n="section.settings">设置</h2>
+          <p class="hint" data-i18n="hint.settingsDrawer">低频参数放在这里，主工作区保持给素材和分析结果。</p>
+        </div>
+        <button id="closeSettingsBtn" type="button" data-i18n="button.close">关闭</button>
+      </div>
+
+      <div class="settings-tabs" role="tablist" aria-label="设置分组" data-i18n-aria-label="aria.settingsTabs">
+        <button type="button" class="settings-tab is-active" data-settings-tab="backend" aria-selected="true" data-i18n="settingsTab.backend">AI 模型</button>
+        <button type="button" class="settings-tab" data-settings-tab="analysis" aria-selected="false" data-i18n="settingsTab.analysis">分析参数</button>
+        <button type="button" class="settings-tab" data-settings-tab="frames" aria-selected="false" data-i18n="settingsTab.frames">抽帧</button>
+        <button type="button" class="settings-tab" data-settings-tab="write" aria-selected="false" data-i18n="settingsTab.write">写入与诊断</button>
+      </div>
+
+      <div class="settings-drawer-body">
+        <section class="settings-section is-active" data-settings-panel="backend">
+          <div class="backend-panel">
+            <div class="backend-head">
+              <div>
+                <strong data-i18n="label.eagleAiModel">Eagle AI 模型</strong>
+                <span id="backendStatus" data-i18n="model.officialSuite">使用 Eagle 官方 AI 模型套件</span>
+              </div>
+              <div class="backend-actions">
+                <button id="refreshBackendStatusBtn" type="button" data-i18n="button.check">检测</button>
+                <button id="eagleAiSettingsBtn" type="button">Eagle AI</button>
+              </div>
+            </div>
+            <div id="healthCheckPanel" class="health-check-panel">
+              <div class="health-check-head">
+                <div>
+                  <strong data-i18n="label.healthCheck">环境检查</strong>
+                  <span id="healthSummary" data-i18n="health.waiting">等待检查</span>
+                </div>
+                <button id="runHealthCheckBtn" type="button" data-i18n="button.healthCheck">环境检查</button>
+              </div>
+              <div id="healthStatusList" class="health-status-list"></div>
+            </div>
+            <div class="prompt-card">
+              <div class="settings-section-title" data-i18n="label.globalPrompt">全局 AI 提示词</div>
+              <label class="prompt-field prompt-field-large">
+                <span data-i18n="label.promptPreviewEdit">预览 / 编辑提示词</span>
+                <textarea id="globalPrompt" rows="10" placeholder="可选。这里写给 AI 的全局分析偏好，例如：优先识别技能用途、不要添加纯颜色标签、偏向游戏特效术语。" data-i18n-placeholder="placeholder.globalPrompt"></textarea>
+              </label>
+              <p class="hint" data-i18n="hint.globalPrompt">全局提示词会附加到每次 AI 分析中；不能覆盖标签池、JSON 格式和置信度要求。</p>
+            </div>
+            <p class="hint" data-i18n="hint.eagleAiOnly">分析只使用 Eagle AI 模型套件。请在 Eagle AI 设置中配置默认视觉模型；视频、动图和诊断抽帧仍需要 FFmpeg 扩展模块。</p>
+          </div>
+        </section>
+
+        <section class="settings-section" data-settings-panel="analysis" hidden>
+          <div class="settings-section-title" data-i18n="settingsTab.analysis">分析参数</div>
+          <div class="preset-panel">
+            <label>
+              <span data-i18n="label.analysisPreset">分析预设</span>
+              <select id="analysisPresetSelect">
+                <option value="" data-i18n="option.noPreset">不使用预设</option>
+                <option value="快速粗标" data-i18n="preset.quick">快速粗标</option>
+                <option value="精细分析" data-i18n="preset.detail">精细分析</option>
+                <option value="长视频省钱" data-i18n="preset.longVideoSaver">长视频省钱</option>
+              </select>
+            </label>
+            <button id="applyPresetBtn" type="button" data-i18n="button.applyPreset">应用预设</button>
+            <p id="presetHint" class="hint" data-i18n="hint.preset">预设只覆盖分析关键参数，不改全局提示词和诊断目录。</p>
+          </div>
+          <div class="settings-grid">
+            <label>
+              <span data-i18n="label.maxTags">最大标签数</span>
+              <input id="maxTags" type="number" min="1" max="20" value="10">
+            </label>
+            <label>
+              <span data-i18n="label.concurrency">并发数</span>
+              <input id="concurrency" type="number" min="1" max="5" value="2">
+            </label>
+            <label>
+              <span data-i18n="label.aiRetryCount">AI 重试次数</span>
+              <input id="aiRetryCount" type="number" min="0" max="10" value="2">
+            </label>
+            <label>
+              <span data-i18n="label.requestChunkK">AI 请求分块(K)</span>
+              <input id="requestChunkK" type="number" min="4" max="256" step="4" value="256">
+            </label>
+            <label>
+              <span data-i18n="label.autoConfidence">自动写入置信度</span>
+              <input id="autoConfidence" type="number" min="0" max="1" step="0.05" value="0.8">
+            </label>
+            <label>
+              <span data-i18n="label.hideConfidence">隐藏低于置信度</span>
+              <input id="hideConfidence" type="number" min="0" max="1" step="0.05" value="0.45">
+            </label>
+          </div>
+          <div class="analysis-explain-card">
+            <div class="settings-section-title" data-i18n="label.analysisExplanation">分析阐述</div>
+            <div class="checks">
+              <label><input id="allowOutOfPoolSuggestions" type="checkbox"> <span data-i18n="check.allowOutOfPoolSuggestions">允许标签池外兜底建议</span></label>
+            </div>
+            <p class="hint" data-i18n="hint.allowOutOfPoolSuggestions">关闭时只从当前标签池选择；开启后会把本地默认模板作为兜底候选，命中后仍需确认，不会自动创建 Eagle 标签。</p>
+          </div>
+        </section>
+
+        <section class="settings-section" data-settings-panel="frames" hidden>
+          <div class="settings-section-title" data-i18n="settingsTab.frames">抽帧</div>
+          <div class="settings-grid">
+            <label>
+              <span data-i18n="label.frameRate">抽帧频率</span>
+              <input id="frameRateValue" type="number" min="0.125" max="8" step="0.125" value="1">
+            </label>
+            <label>
+              <span data-i18n="label.frameRateUnit">频率单位</span>
+              <select id="frameRateUnit">
+                <option value="fps" data-i18n="option.fps">帧/秒</option>
+                <option value="spf" data-i18n="option.spf">秒/帧</option>
+              </select>
+            </label>
+            <label>
+              <span data-i18n="label.maxVideoFramesShort">视频最大帧数</span>
+              <input id="maxVideoFrames" type="number" min="1" max="120" value="60">
+            </label>
+            <label>
+              <span data-i18n="label.maxAnimatedFrames">动图最大帧数</span>
+              <input id="maxAnimatedFrames" type="number" min="1" max="120" value="24">
+            </label>
+            <label>
+              <span data-i18n="label.skipStart">跳过开头(秒)</span>
+              <input id="skipStart" type="number" min="0" max="10" step="0.1" value="0.2">
+            </label>
+            <label>
+              <span data-i18n="label.skipEnd">跳过结尾(秒)</span>
+              <input id="skipEnd" type="number" min="0" max="10" step="0.1" value="0.2">
+            </label>
+          </div>
+          <p id="frameRateHint" class="hint" data-i18n="hint.frameRateRange">抽帧频率范围：最高 8 帧/秒，最低 3 秒/帧。</p>
+        </section>
+
+        <section class="settings-section" data-settings-panel="write" hidden>
+          <div class="settings-section-title" data-i18n="settingsTab.write">写入与诊断</div>
+          <div class="checks">
+            <label><input id="skipTagged" type="checkbox"> <span data-i18n="check.skipTagged">只分析未打标签素材</span></label>
+            <label><input id="previewBeforeWrite" type="checkbox" checked> <span data-i18n="check.previewBeforeWrite">分析后预览，再手动写入</span></label>
+            <label><input id="autoApplyHighConfidence" type="checkbox"> <span data-i18n="check.autoApplyHighConfidence">自动写入高置信标签</span></label>
+            <label><input id="writeAnnotation" type="checkbox" checked> <span data-i18n="check.writeAnnotation">将 AI 分析说明追加到注释</span></label>
+            <label><input id="includeTitleInPrompt" type="checkbox"> <span data-i18n="check.includeTitleInPrompt">将素材标题传给 AI</span></label>
+            <label><input id="diagnosticEnabled" type="checkbox"> <span data-i18n="check.diagnosticEnabled">保存诊断帧和路径信息</span></label>
+          </div>
+          <p class="hint" data-i18n="hint.includeTitleInPromptShort">默认不把素材标题传给 AI，避免标题或文件名误导画面识别。</p>
+          <label class="diagnostic-path-field">
+            <span data-i18n="label.diagnosticDir">诊断保存文件夹</span>
+            <div class="inline-form">
+              <input id="diagnosticDir" type="text" placeholder="请选择或粘贴本地文件夹路径" data-i18n-placeholder="placeholder.diagnosticDir">
+              <button id="chooseDiagnosticDirBtn" type="button" data-i18n="button.chooseFolder">选择文件夹</button>
+            </div>
+          </label>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <section id="collectorBar" class="collector-bar" aria-label="素材采集条" data-i18n-aria-label="aria.collectorBar" hidden>
+    <div class="collector-title">
+      <strong data-i18n="section.collector">素材采集</strong>
+      <span data-i18n="hint.collector">边选边收</span>
+    </div>
+    <div class="collector-meta">
+      <span id="collectorCount" class="collector-count-badge" data-i18n="collector.countInitial">0 个待分析</span>
+      <span id="collectorStatus" class="collector-status" data-i18n="collector.waiting">等待收集</span>
+    </div>
+    <button id="collectorAppendBtn" type="button" class="collector-action collector-action-primary" aria-label="收集当前选中素材" data-i18n-aria-label="aria.collectSelected">
+      <svg class="collector-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 5v14M5 12h14"></path>
+      </svg>
+      <span data-i18n="button.collectSelected">收集选中</span>
+    </button>
+    <button id="collectorAnalyzeBtn" type="button" class="collector-action collector-action-accent" aria-label="开始分析待分析素材" data-i18n-aria-label="aria.analyzeQueued">
+      <svg class="collector-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 5v14l11-7-11-7Z"></path>
+      </svg>
+      <span data-i18n="button.startAnalysis">开始分析</span>
+    </button>
+    <button id="collectorClearBtn" type="button" class="collector-action collector-action-danger" aria-label="清空待分析队列和分析结果" data-i18n-aria-label="aria.clearQueueAndResults">
+      <svg class="collector-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14M10 11v6M14 11v6M8 7l1-3h6l1 3M7 7l1 13h8l1-13"></path>
+      </svg>
+      <span data-i18n="button.clearAll">清空全部</span>
+    </button>
+    <button id="collectorExpandBtn" type="button" class="collector-action" aria-label="展开完整工作台" data-i18n-aria-label="aria.expandWorkbench">
+      <svg class="collector-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path>
+      </svg>
+      <span data-i18n="button.workbench">工作台</span>
+    </button>
+    <button id="collectorCloseBtn" type="button" class="window-close-btn" aria-label="关闭窗口" title="关闭窗口" data-i18n-aria-label="aria.closeWindow" data-i18n-title="aria.closeWindow">×</button>
+  </section>
+
+  <script src="plugin.js"></script>
+</body>
+</html>

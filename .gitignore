@@ -1,0 +1,18 @@
+# Local backups
+*.bak-*
+
+# Build output
+dist/
+*.eagleplugin
+
+# Runtime files
+*.log
+logs/
+diagnostics/
+diagnostic/
+
+# Dependencies and OS files
+node_modules/
+.DS_Store
+Thumbs.db
+
