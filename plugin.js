@@ -70,6 +70,7 @@
   ];
 
   const STATIC_IMAGE_EXTS = new Set(["jpg", "jpeg", "png", "bmp", "tif", "tiff", "heic", "avif"]);
+  const CONVERTIBLE_IMAGE_EXTS = new Set(["tga", "dds"]);
   const WEBP_EXT = "webp";
   const ANIMATED_EXTS = new Set(["gif", "apng"]);
   const VIDEO_EXTS = new Set(["mp4", "mov", "webm", "avi", "mkv", "ts", "m4v", "wmv"]);
@@ -2365,6 +2366,9 @@
       reportAnalysisStage(onProgress, "读取图片", 0.28);
       return singleImageMedia(sourcePath || getItemPreviewPath(item), "image");
     }
+    if (CONVERTIBLE_IMAGE_EXTS.has(ext)) {
+      return convertStillImageMedia(sourcePath, ext, onProgress);
+    }
     if (ext === WEBP_EXT) {
       const animated = await isAnimatedWebp(sourcePath);
       if (!animated) reportAnalysisStage(onProgress, "读取图片", 0.28);
@@ -2400,6 +2404,38 @@
       sourcePath: filePath,
       previewPath: ""
     };
+  }
+
+  async function convertStillImageMedia(sourcePath, ext, onProgress = null) {
+    if (!sourcePath) throw new Error("找不到可转换的原文件路径");
+    if (!fs || !os || !path || !cp) throw new Error("当前插件环境缺少 Node.js 能力，无法转换 TGA/DDS 图片");
+    reportAnalysisStage(onProgress, "检测 FFmpeg", 0.12);
+    const ffmpegPaths = await getFfmpegPaths();
+    if (!ffmpegPaths.ffmpeg) throw new Error("未检测到 Eagle FFmpeg 扩展");
+    reportAnalysisStage(onProgress, `转换 ${String(ext || "").toUpperCase()} 图片`, 0.24);
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "vfx-ai-tagger-"));
+    const output = path.join(tempDir, "converted-image.png");
+    try {
+      await runFfmpegImageConvert(ffmpegPaths.ffmpeg, sourcePath, output);
+      if (!fs.existsSync(output) || getFileSize(output) <= 0) {
+        throw new Error("转换后没有生成可分析图片");
+      }
+      return {
+        kind: "image",
+        images: [toFileUrl(output)],
+        filePaths: [output],
+        frameCount: 1,
+        tempDir,
+        sourcePath,
+        previewPath: "",
+        convertedFrom: ext
+      };
+    } catch (error) {
+      try {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+      } catch (cleanupError) {}
+      throw error;
+    }
   }
 
   async function fallbackAnimatedStillMedia(item, sourcePath, originalError, onProgress = null) {
@@ -2535,6 +2571,13 @@
 
   async function runFfmpegExtract(ffmpegBinary, sourcePath, outputPath, second) {
     const args = ["-y", "-ss", String(second), "-i", sourcePath, "-frames:v", "1", "-q:v", "2", "-update", "1", outputPath];
+    return new Promise((resolve, reject) => {
+      cp.execFile(ffmpegBinary, args, (error, stdout, stderr) => error ? reject(buildProcessError(error, stderr)) : resolve());
+    });
+  }
+
+  async function runFfmpegImageConvert(ffmpegBinary, sourcePath, outputPath) {
+    const args = ["-y", "-i", sourcePath, "-frames:v", "1", "-update", "1", outputPath];
     return new Promise((resolve, reject) => {
       cp.execFile(ffmpegBinary, args, (error, stdout, stderr) => error ? reject(buildProcessError(error, stderr)) : resolve());
     });
@@ -2942,6 +2985,7 @@
   async function buildHealthStatus(settings, model) {
     const checks = [];
     const selectedNeedsFfmpeg = state.selectedItems.some(itemNeedsFfmpeg);
+    const selectedNeedsFfprobe = state.selectedItems.some(itemNeedsFfprobe);
 
     checks.push({
       id: "node",
@@ -2966,7 +3010,7 @@
       message: model ? "已配置默认视觉模型" : "未配置 Eagle 默认视觉模型"
     });
 
-    checks.push(await checkFfmpegHealth(selectedNeedsFfmpeg));
+    checks.push(await checkFfmpegHealth(selectedNeedsFfmpeg, selectedNeedsFfprobe));
     checks.push(checkDiagnosticHealth(settings));
     checks.push(checkSelectedPathHealth());
     return checks.map(normalizeHealthCheck);
@@ -2986,7 +3030,7 @@
     };
   }
 
-  async function checkFfmpegHealth(required) {
+  async function checkFfmpegHealth(required, requireFfprobe = required) {
     if (!required) {
       return {
         id: "ffmpeg",
@@ -3014,13 +3058,13 @@
         return { id: "ffmpeg", label: "FFmpeg", ok: false, blocking: true, message: "Eagle FFmpeg 扩展未安装" };
       }
       const paths = typeof ffmpeg.getPaths === "function" ? await ffmpeg.getPaths() : ffmpeg.paths;
-      const ok = Boolean(paths && paths.ffmpeg && paths.ffprobe);
+      const ok = Boolean(paths && paths.ffmpeg && (!requireFfprobe || paths.ffprobe));
       return {
         id: "ffmpeg",
         label: "FFmpeg",
         ok,
         blocking: true,
-        message: ok ? "FFmpeg/ffprobe 路径可用" : "无法读取 FFmpeg/ffprobe 路径"
+        message: ok ? (requireFfprobe ? "FFmpeg/ffprobe 路径可用" : "FFmpeg 路径可用") : (requireFfprobe ? "无法读取 FFmpeg/ffprobe 路径" : "无法读取 FFmpeg 路径")
       };
     } catch (error) {
       return {
@@ -3113,6 +3157,16 @@
   }
 
   function itemNeedsFfmpeg(item) {
+    const filePath = getItemFilePath(item);
+    const ext = getItemExt(item, filePath);
+    if (CONVERTIBLE_IMAGE_EXTS.has(ext)) return true;
+    if (VIDEO_EXTS.has(ext) || ANIMATED_EXTS.has(ext)) return true;
+    if (ext === WEBP_EXT) return hasFileMarkerSync(filePath, "ANIM", 65536);
+    if (ext === "png") return hasFileMarkerSync(filePath, "acTL", 4096);
+    return false;
+  }
+
+  function itemNeedsFfprobe(item) {
     const filePath = getItemFilePath(item);
     const ext = getItemExt(item, filePath);
     if (VIDEO_EXTS.has(ext) || ANIMATED_EXTS.has(ext)) return true;
